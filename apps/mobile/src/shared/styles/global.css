@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Theme tokens as space-separated RGB channels so Tailwind's
+ * `rgb(var(--color-x) / <alpha-value>)` opacity syntax works.
+ * Values mirror `Colors` in src/constants/theme.ts. Dark mode follows the
+ * system scheme (matching AppColorSchemeProvider's default behaviour).
+ */
+@layer base {
+  :root {
+    --color-background: 255 248 237; /* #FFF8ED */
+    --color-card: 255 255 255; /* #FFFFFF */
+    --color-background-element: 244 234 218; /* #F4EADA */
+    --color-background-selected: 234 219 199; /* #EADBC7 */
+    --color-active-tab-background: 250, 240, 230; /* #FAF0E6 */
+    --color-primary: 185 74 53; /* #B94A35 */
+    --color-primary-soft: 248 227 221; /* #F8E3DD */
+    --color-primary-pressed: 140 47 36; /* #8C2F24 */
+    --color-accent: 232 162 58; /* #E8A23A */
+    --color-accent-soft: 255 241 216; /* #FFF1D8 */
+    --color-success: 71 106 69; /* #476A45 */
+    --color-success-soft: 234 241 231; /* #EAF1E7 */
+    --color-info-background: 248 241 231; /* #F8F1E7 */
+    --color-tag-red-bg: 248 227 221; /* #F8E3DD */
+    --color-tag-red-text: 185 74 53; /* #B94A35 */
+    --color-tag-green-bg: 234 241 231; /* #EAF1E7 */
+    --color-tag-green-text: 71 106 69; /* #476A45 */
+    --color-tag-gold-bg: 251 240 217; /* #FBF0D9 */
+    --color-tag-gold-text: 117 90 44; /* #755A2C */
+    --color-text: 43 33 27; /* #2B211B */
+    --color-text-secondary: 116 102 93; /* #74665D */
+    --color-text-disabled: 168 156 143; /* #A89C8F */
+    --color-border: 232 217 201; /* #E8D9C9 */
+    --color-error: 180 35 24; /* #B42318 */
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-background: 23 19 16; /* #171310 */
+      --color-card: 33 27 23; /* #211B17 */
+      --color-background-element: 43 35 30; /* #2B231E */
+      --color-background-selected: 58 42 32; /* #3A2A20 */
+      --color-primary: 224 107 85; /* #E06B55 */
+      --color-primary-soft: 74 44 39; /* #4A2C27 */
+      --color-primary-pressed: 240 123 102; /* #F07B66 */
+      --color-accent: 242 184 75; /* #F2B84B */
+      --color-accent-soft: 74 56 32; /* #4A3820 */
+      --color-success: 118 163 111; /* #76A36F */
+      --color-success-soft: 38 60 41; /* #263C29 */
+      --color-info-background: 58 48 37; /* #3A3025 */
+      --color-tag-red-bg: 74 44 39; /* #4A2C27 */
+      --color-tag-red-text: 224 107 85; /* #E06B55 */
+      --color-tag-green-bg: 38 60 41; /* #263C29 */
+      --color-tag-green-text: 118 163 111; /* #76A36F */
+      --color-tag-gold-bg: 71 57 31; /* #47391F */
+      --color-tag-gold-text: 242 215 155; /* #F2D79B */
+      --color-text: 255 246 234; /* #FFF6EA */
+      --color-text-secondary: 197 181 168; /* #C5B5A8 */
+      --color-text-disabled: 128 115 106; /* #80736A */
+      --color-border: 73 59 50; /* #493B32 */
+      --color-error: 255 138 127; /* #FF8A7F */
+    }
+  }
+}
+
+/* Web-only font fallbacks (ignored on native). */
+:root {
+  --font-display:
+    'Inter_400Regular', ui-sans-serif, system-ui, sans-serif,
+    Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+  --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
+  --font-serif: 'DMSerifDisplay_400Regular', Georgia, 'Times New Roman', serif;
+}
+
+body,
+input,
+textarea,
+button,
+select {
+  font-family: var(--font-display);
+}
