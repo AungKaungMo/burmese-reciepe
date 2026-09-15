@@ -59,6 +59,60 @@ model Profile {
   @@map("profiles")
 }
 
+model MeasurementUnit {
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code   String @unique @db.VarChar(30)
+  symbol String @db.VarChar(20)
+
+  translations          MeasurementUnitTranslation[]
+  defaultForIngredients Ingredient[]                 @relation("IngredientDefaultUnit")
+  defaultForNutrients   Nutrient[]                   @relation("NutrientDefaultUnit")
+
+  @@map("measurement_units")
+}
+
+model Nutrient {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String  @unique @db.VarChar(50)
+  defaultUnitId String  @db.Uuid
+  iconPath      String?
+
+  defaultUnit MeasurementUnit @relation("NutrientDefaultUnit", fields: [defaultUnitId], references: [id], onDelete: Restrict)
+
+  translations NutrientTranslation[]
+  recipes      RecipeNutrient[]
+
+  @@map("nutrients")
+}
+
+model NutrientTranslation {
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nutrientId   String  @db.Uuid
+  languageCode String  @db.VarChar(10)
+  name         String  @db.VarChar(100)
+  description  String?
+
+  nutrient Nutrient @relation(fields: [nutrientId], references: [id], onDelete: Cascade)
+
+  @@unique([nutrientId, languageCode])
+  @@index([languageCode, name])
+  @@map("nutrient_translations")
+}
+
+model MeasurementUnitTranslation {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  unitId       String @db.Uuid
+  languageCode String @db.VarChar(10)
+  name         String @db.VarChar(100)
+  shortLabel   String @db.VarChar(30)
+
+  unit MeasurementUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, languageCode])
+  @@index([languageCode, name])
+  @@map("measurement_unit_translations")
+}
+
 model Recipe {
   id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   slug           String           @unique
@@ -77,7 +131,8 @@ model Recipe {
 
   translations  RecipeTranslation[]
   categoryLinks RecipeCategoryLink[]
-  reciepeSteps  RecipeStep[]
+  recipeSteps   RecipeStep[]
+  nutrients     RecipeNutrient[]
 
   @@map("recipes")
 }
@@ -103,15 +158,32 @@ model RecipeTranslation {
   @@map("recipe_translations")
 }
 
+model RecipeNutrient {
+  recipeId    String   @db.Uuid
+  nutrientId  String   @db.Uuid
+  amount      Decimal  @db.Decimal(10, 2)
+  isEstimated Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  nutrient Nutrient @relation(fields: [nutrientId], references: [id], onDelete: Restrict)
+
+  @@id([recipeId, nutrientId])
+  @@index([nutrientId])
+  @@map("recipe_nutrients")
+}
+
 model Category {
-  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  scope         CategoryScope
-  code          String        @db.VarChar(100)
-  iconPath      String?
-  sortOrder     Int           @default(0)
-  isActive      Boolean       @default(true)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scope     CategoryScope
+  code      String        @db.VarChar(100)
+  iconPath  String?
+  sortOrder Int           @default(0)
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   translations CategoryTranslation[]
   ingredients  Ingredient[]
@@ -151,18 +223,6 @@ model RecipeCategoryLink {
   @@map("recipe_category_links")
 }
 
-model MeasurementUnit {
-  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code         String @unique @db.VarChar(30)
-  symbol       String @db.VarChar(20)
-  myanmarLabel String @db.VarChar(50)
-  sortOrder    Int    @default(0)
-
-  defaultForIngredients Ingredient[] @relation("IngredientDefaultUnit")
-
-  @@map("measurement_units")
-}
-
 model Ingredient {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code          String   @unique @db.VarChar(100)
@@ -184,6 +244,18 @@ model Ingredient {
 
   @@index([categoryId, isActive])
   @@map("ingredients")
+}
+
+/// Archive of the pre-migration split light/dark ingredient icons, written by the
+/// `ingredient_single_icon` migration so the alternate (and legacy) path stays
+/// recoverable after collapsing to a single `Ingredient.iconPath`.
+model IngredientIconBackup {
+  ingredientId  String   @id @db.Uuid
+  lightIconPath String?
+  darkIconPath  String?
+  archivedAt    DateTime @default(now())
+
+  @@map("ingredient_icon_backup")
 }
 
 model IngredientTranslation {
@@ -250,7 +322,7 @@ model RecipeStep {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  recipe       Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipe       Recipe                  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   translations RecipeStepTranslation[]
 
   @@unique([recipeId, position])
@@ -259,16 +331,16 @@ model RecipeStep {
 }
 
 model RecipeStepTranslation {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  recipeStepId   String   @db.Uuid
-  languageCode   String   @db.VarChar(10)
-  instruction    String
-  timerLabel     String?
-  completionCue  String?
-  tip            String?
-  warning        String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipeStepId  String   @db.Uuid
+  languageCode  String   @db.VarChar(10)
+  instruction   String
+  timerLabel    String?
+  completionCue String?
+  tip           String?
+  warning       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   recipeStep RecipeStep @relation(fields: [recipeStepId], references: [id], onDelete: Cascade)
 

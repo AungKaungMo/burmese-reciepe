@@ -12,7 +12,7 @@ export function makeRowToIngredientInput(categoryIdByCode: Map<string, string>) 
       translations.push({ languageCode: 'EN', name: row.name_en, aliases: toList(row.aliases_en) });
     }
 
-    const categoryCode = row.category_code.toLowerCase();
+    const categoryCode = (row.category_code ?? '').toLowerCase();
 
     return {
       code: row.code,

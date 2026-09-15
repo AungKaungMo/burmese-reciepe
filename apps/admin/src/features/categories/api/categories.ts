@@ -20,6 +20,29 @@ export async function fetchCategories(
   return paginatedCategoriesSchema.parse(data);
 }
 
+/** Filters for {@link fetchAllCategories} — everything except paging. */
+export type CategoryFilters = Omit<ListCategoriesQuery, 'page' | 'pageSize'>;
+
+/**
+ * Fetches every category matching the filters across all pages (not just the first).
+ * Loads page 1 to learn the page count, then pulls the remaining pages in parallel.
+ * Use for pickers that must offer the full set (e.g. a category dropdown).
+ */
+export async function fetchAllCategories(filters: CategoryFilters = {}): Promise<Category[]> {
+  const pageSize = 100;
+  const first = await fetchCategories({ ...filters, page: 1, pageSize });
+
+  if (first.totalPages <= 1) return first.items;
+
+  const rest = await Promise.all(
+    Array.from({ length: first.totalPages - 1 }, (_, index) =>
+      fetchCategories({ ...filters, page: index + 2, pageSize }),
+    ),
+  );
+
+  return [first.items, ...rest.map((page) => page.items)].flat();
+}
+
 export async function fetchCategory(id: string): Promise<Category> {
   const { data } = await api.get(`/v1/categories/${id}`);
   return categorySchema.parse(data);

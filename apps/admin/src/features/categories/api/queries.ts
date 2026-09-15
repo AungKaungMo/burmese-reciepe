@@ -10,15 +10,18 @@ import type {
 import {
   createCategory,
   deleteCategory,
+  fetchAllCategories,
   fetchCategories,
   fetchCategory,
   importCategories,
   updateCategory,
+  type CategoryFilters,
 } from './categories';
 
 export const categoryKeys = {
   all: ['categories'] as const,
   list: (query: ListCategoriesQuery) => ['categories', 'list', query] as const,
+  full: (filters: CategoryFilters) => ['categories', 'full', filters] as const,
   detail: (id: string) => ['categories', 'detail', id] as const,
 };
 
@@ -28,6 +31,17 @@ export function useCategories(query: ListCategoriesQuery) {
     queryFn: () => fetchCategories(query),
     // Keep the previous page visible while the next one loads (no flash to empty).
     placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * Loads the complete set of categories matching `filters` (all pages), for pickers
+ * that must offer every option rather than just the first page.
+ */
+export function useAllCategories(filters: CategoryFilters = {}) {
+  return useQuery({
+    queryKey: categoryKeys.full(filters),
+    queryFn: () => fetchAllCategories(filters),
   });
 }
 

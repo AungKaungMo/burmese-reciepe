@@ -4,7 +4,7 @@ import { Controller, type UseFormReturn } from 'react-hook-form';
 
 import type { Category } from '@repo/contracts';
 
-import { useCategories } from '@/features/categories/api/queries';
+import { useAllCategories } from '@/features/categories/api/queries';
 import { LANGUAGES } from '@/features/categories/hooks/use-category-form';
 import { SvgUploadField } from '@/shared/components/svg-upload-field';
 import type { IngredientFormValues } from '@/features/ingredients/hooks/use-ingredient-form';
@@ -47,16 +47,13 @@ export function IngredientFormFields({
     formState: { errors },
   } = form;
 
-  // Ingredients belong to an INGREDIENT-scope category; load them for the picker.
-  const { data: categoriesPage } = useCategories({
-    scope: 'INGREDIENT',
-    page: 1,
-    pageSize: 100,
-  });
+  // Ingredients belong to an INGREDIENT-scope category; load them ALL (across pages)
+  // so every category — including an ingredient's current one when editing — is selectable.
+  const { data: categories } = useAllCategories({ scope: 'INGREDIENT' });
 
   const categoryOptions = useMemo(
-    () => (categoriesPage?.items ?? []).map((c) => ({ id: c.id, label: categoryLabel(c) })),
-    [categoriesPage],
+    () => (categories ?? []).map((c) => ({ id: c.id, label: categoryLabel(c) })),
+    [categories],
   );
 
   return (
