@@ -1,0 +1,69 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  createCategorySchema,
+  listCategoriesQuerySchema,
+  updateCategorySchema,
+  type Category,
+  type CreateCategoryInput,
+  type ListCategoriesQuery,
+  type PaginatedCategories,
+  type UpdateCategoryInput,
+} from '@repo/contracts';
+import { ZodValidationPipe } from '../../common/zod-validation.pipe.js';
+import { SupabaseJwtGuard } from '../auth/supabase-jwt.guard.js';
+import { CategoriesService } from './categories.service.js';
+
+/** CRUD for recipe/ingredient categories and their translations. */
+@Controller('categories')
+@UseGuards(SupabaseJwtGuard)
+export class CategoriesController {
+  constructor(private readonly categories: CategoriesService) {}
+
+  @Get()
+  list(
+    @Query(new ZodValidationPipe(listCategoriesQuerySchema))
+    query: ListCategoriesQuery,
+  ): Promise<PaginatedCategories> {
+    return this.categories.list(query);
+  }
+
+  @Get(':id')
+  getById(@Param('id', ParseUUIDPipe) id: string): Promise<Category> {
+    return this.categories.getById(id);
+  }
+
+  @Post()
+  create(
+    @Body(new ZodValidationPipe(createCategorySchema))
+    input: CreateCategoryInput,
+  ): Promise<Category> {
+    return this.categories.create(input);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(updateCategorySchema))
+    input: UpdateCategoryInput,
+  ): Promise<Category> {
+    return this.categories.update(id, input);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.categories.remove(id);
+  }
+}

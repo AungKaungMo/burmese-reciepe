@@ -1,0 +1,278 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LanguageCode {
+  MY
+  EN
+  JP
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum RecipeStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum RecipeDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum SpiceLevel {
+  NONE
+  MILD
+  MEDIUM
+  HOT
+}
+
+enum TranslationStatus {
+  DRAFT
+  REVIEWED
+}
+
+enum CategoryScope {
+  INGREDIENT
+  RECIPE
+}
+
+model Profile {
+  id          String   @id @db.Uuid
+  displayName String?
+  avatarPath  String?
+  timezone    String   @default("Asia/Yangon")
+  role        UserRole @default(USER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model Recipe {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug           String           @unique
+  status         RecipeStatus     @default(DRAFT)
+  cuisineCode    String           @default("BURMESE")
+  coverImagePath String?
+  servings       Int
+  prepMinutes    Int              @default(0)
+  cookMinutes    Int              @default(0)
+  difficulty     RecipeDifficulty @default(EASY)
+  spiceLevel     SpiceLevel       @default(MILD)
+  isFeatured     Boolean          @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  translations  RecipeTranslation[]
+  categoryLinks RecipeCategoryLink[]
+  reciepeSteps  RecipeStep[]
+
+  @@map("recipes")
+}
+
+model RecipeTranslation {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipeId           String            @db.Uuid
+  languageCode       LanguageCode
+  title              String            @db.VarChar(160)
+  summary            String?           @db.VarChar(300)
+  overview           String?
+  goodToKnow         String[]          @default([])
+  servingSuggestions String[]          @default([])
+  searchKeywords     String[]          @default([])
+  status             TranslationStatus @default(DRAFT)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, languageCode])
+  @@index([languageCode, title])
+  @@map("recipe_translations")
+}
+
+model Category {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scope         CategoryScope
+  code          String        @db.VarChar(100)
+  iconPath      String?
+  sortOrder     Int           @default(0)
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  translations CategoryTranslation[]
+  ingredients  Ingredient[]
+  recipeLinks  RecipeCategoryLink[]
+
+  @@unique([scope, code])
+  @@index([scope, isActive, sortOrder])
+  @@map("categories")
+}
+
+model CategoryTranslation {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId   String       @db.Uuid
+  languageCode LanguageCode
+  name         String       @db.VarChar(100)
+  description  String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, languageCode])
+  @@index([languageCode, name])
+  @@map("category_translations")
+}
+
+model RecipeCategoryLink {
+  recipeId   String @db.Uuid
+  categoryId String @db.Uuid
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, categoryId])
+  @@index([categoryId])
+  @@map("recipe_category_links")
+}
+
+model MeasurementUnit {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code         String @unique @db.VarChar(30)
+  symbol       String @db.VarChar(20)
+  myanmarLabel String @db.VarChar(50)
+  sortOrder    Int    @default(0)
+
+  defaultForIngredients Ingredient[] @relation("IngredientDefaultUnit")
+
+  @@map("measurement_units")
+}
+
+model Ingredient {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String   @unique @db.VarChar(100)
+  categoryId    String   @db.Uuid
+  defaultUnitId String?  @db.Uuid
+  emoji         String?
+  lightIconPath String?
+  darkIconPath  String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  category    Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  defaultUnit MeasurementUnit? @relation("IngredientDefaultUnit", fields: [defaultUnitId], references: [id], onDelete: SetNull)
+
+  translations IngredientTranslation[]
+
+  originalSubstitutions   IngredientSubstitution[] @relation("OriginalIngredientSubstitutions")
+  substituteSubstitutions IngredientSubstitution[] @relation("SubstituteIngredientSubstitutions")
+
+  @@index([categoryId, isActive])
+  @@map("ingredients")
+}
+
+model IngredientTranslation {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ingredientId String       @db.Uuid
+  languageCode LanguageCode
+  name         String       @db.VarChar(120)
+  aliases      String[]     @default([])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([ingredientId, languageCode])
+  @@index([languageCode, name])
+  @@map("ingredient_translations")
+}
+
+model IngredientSubstitution {
+  id                     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  originalIngredientId   String @db.Uuid
+  substituteIngredientId String @db.Uuid
+
+  originalAmount     Decimal? @db.Decimal(10, 2)
+  originalUnitCode   String?  @db.VarChar(30)
+  substituteAmount   Decimal? @db.Decimal(10, 2)
+  substituteUnitCode String?  @db.VarChar(30)
+
+  priority  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  originalIngredient   Ingredient @relation("OriginalIngredientSubstitutions", fields: [originalIngredientId], references: [id], onDelete: Restrict)
+  substituteIngredient Ingredient @relation("SubstituteIngredientSubstitutions", fields: [substituteIngredientId], references: [id], onDelete: Restrict)
+
+  translations IngredientSubstitutionTranslation[]
+
+  @@unique([originalIngredientId, substituteIngredientId])
+  @@index([originalIngredientId, isActive, priority])
+  @@map("ingredient_substitutions")
+}
+
+model IngredientSubstitutionTranslation {
+  id                       String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ingredientSubstitutionId String       @db.Uuid
+  languageCode             LanguageCode
+  usageInstruction         String?
+  effectNote               String?
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+
+  substitution IngredientSubstitution @relation(fields: [ingredientSubstitutionId], references: [id], onDelete: Cascade)
+
+  @@unique([ingredientSubstitutionId, languageCode])
+  @@map("ingredient_substitution_translations")
+}
+
+model RecipeStep {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipeId        String   @db.Uuid
+  position        Int
+  durationSeconds Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  recipe       Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  translations RecipeStepTranslation[]
+
+  @@unique([recipeId, position])
+  @@index([recipeId, position])
+  @@map("recipe_steps")
+}
+
+model RecipeStepTranslation {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipeStepId   String   @db.Uuid
+  languageCode   String   @db.VarChar(10)
+  instruction    String
+  timerLabel     String?
+  completionCue  String?
+  tip            String?
+  warning        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  recipeStep RecipeStep @relation(fields: [recipeStepId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeStepId, languageCode])
+  @@map("recipe_step_translations")
+}

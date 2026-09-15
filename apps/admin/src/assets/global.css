@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Burmese Recipe design tokens. These mirror the existing app-wide palette
+ * in apps/mobile/src/shared/theme/theme.ts, expressed as shadcn CSS tokens.
+ */
+:root {
+  --background: oklch(0.974 0.017 82.3); /* #FFF8ED — rice cream */
+  --foreground: oklch(0.246 0.025 54.5); /* #2B211B — dark brown */
+  --card: oklch(1 0 0); /* #FFFFFF */
+  --card-foreground: oklch(0.246 0.025 54.5);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.246 0.025 54.5);
+  --primary: oklch(0.488 0.143 31.4); /* #B94A35 — clay red */
+  --primary-foreground: oklch(0.985 0.008 83);
+  --secondary: oklch(0.934 0.027 76.8); /* #F4EADA */
+  --secondary-foreground: oklch(0.246 0.025 54.5);
+  --muted: oklch(0.949 0.021 77.4); /* #FAF0E6 */
+  --muted-foreground: oklch(0.503 0.028 52.6); /* #74665D */
+  --accent: oklch(0.93 0.035 33.5); /* soft clay tint — hover/active surface */
+  --accent-foreground: oklch(0.488 0.143 31.4); /* clay red (primary) */
+  --success: oklch(0.442 0.058 139.6); /* #476A45 — leaf green */
+  --destructive: oklch(0.408 0.169 29.3); /* #B42318 */
+  --destructive-foreground: oklch(0.985 0.008 83);
+  --border: oklch(0.891 0.031 71.8); /* #E8D9C9 */
+  --input: oklch(0.891 0.031 71.8);
+  --ring: oklch(0.488 0.143 31.4);
+  --chart-1: oklch(0.488 0.143 31.4);
+  --chart-2: oklch(0.738 0.139 70.1);
+  --chart-3: oklch(0.442 0.058 139.6); /* #476A45 */
+  --chart-4: oklch(0.66 0.09 50);
+  --chart-5: oklch(0.58 0.11 25);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.949 0.021 77.4);
+  --sidebar-foreground: oklch(0.246 0.025 54.5);
+  --sidebar-primary: oklch(0.488 0.143 31.4);
+  --sidebar-primary-foreground: oklch(0.985 0.008 83);
+  --sidebar-accent: oklch(0.934 0.027 76.8);
+  --sidebar-accent-foreground: oklch(0.246 0.025 54.5);
+  --sidebar-border: oklch(0.891 0.031 71.8);
+  --sidebar-ring: oklch(0.488 0.143 31.4);
+}
+
+.dark {
+  --background: oklch(0.177 0.012 52.1); /* #171310 — espresso black */
+  --foreground: oklch(0.969 0.016 82.5); /* #FFF6EA — rice white */
+  --card: oklch(0.222 0.016 54.8); /* #211B17 — dark cocoa */
+  --card-foreground: oklch(0.969 0.016 82.5);
+  --popover: oklch(0.222 0.016 54.8);
+  --popover-foreground: oklch(0.969 0.016 82.5);
+  --primary: oklch(0.648 0.139 31.2); /* #E06B55 — light clay */
+  --primary-foreground: oklch(0.177 0.012 52.1);
+  --secondary: oklch(0.274 0.021 54.2); /* #2B231E */
+  --secondary-foreground: oklch(0.969 0.016 82.5);
+  --muted: oklch(0.31 0.036 45.2); /* #3A2A20 */
+  --muted-foreground: oklch(0.759 0.025 61.3); /* #C5B5A8 */
+  --accent: oklch(0.31 0.045 31.2); /* dark clay tint — hover/active surface */
+  --accent-foreground: oklch(0.648 0.139 31.2); /* light clay (primary) */
+  --success: oklch(0.619 0.085 139.7); /* #76A36F — fresh leaf */
+  --destructive: oklch(0.71 0.15 27.5); /* #FF8A7F */
+  --destructive-foreground: oklch(0.177 0.012 52.1);
+  --border: oklch(0.308 0.024 51.1); /* #493B32 */
+  --input: oklch(0.308 0.024 51.1);
+  --ring: oklch(0.648 0.139 31.2);
+  --chart-1: oklch(0.648 0.139 31.2);
+  --chart-2: oklch(0.789 0.141 72.4);
+  --chart-3: oklch(0.619 0.085 139.7); /* #76A36F */
+  --chart-4: oklch(0.72 0.09 53);
+  --chart-5: oklch(0.65 0.11 27);
+  --sidebar: oklch(0.222 0.016 54.8);
+  --sidebar-foreground: oklch(0.969 0.016 82.5);
+  --sidebar-primary: oklch(0.648 0.139 31.2);
+  --sidebar-primary-foreground: oklch(0.177 0.012 52.1);
+  --sidebar-accent: oklch(0.274 0.021 54.2);
+  --sidebar-accent-foreground: oklch(0.969 0.016 82.5);
+  --sidebar-border: oklch(0.308 0.024 51.1);
+  --sidebar-ring: oklch(0.648 0.139 31.2);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply min-h-screen bg-background text-foreground antialiased;
+  }
+}
