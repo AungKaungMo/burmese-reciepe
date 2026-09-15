@@ -34,7 +34,7 @@ export function AdminNavbar() {
       <Button className="lg:hidden" size="icon" variant="outline" aria-label="Open navigation">
         <Menu className="size-4" />
       </Button>
-      <div className="flex h-10 max-w-[46.25rem] flex-1 items-center gap-3 rounded-lg border bg-muted/40 px-3 shadow-xs">
+      <div className="flex h-10 max-w-185 flex-1 items-center gap-3 rounded-lg border bg-muted/40 px-3 shadow-xs">
         <Search className="size-4 shrink-0 text-muted-foreground" />
         <input
           aria-label="Search"

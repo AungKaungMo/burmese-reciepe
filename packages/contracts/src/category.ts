@@ -76,3 +76,16 @@ export type ListCategoriesQuery = z.infer<typeof listCategoriesQuerySchema>;
 
 export const paginatedCategoriesSchema = paginatedSchema(categorySchema);
 export type PaginatedCategories = Paginated<Category>;
+
+// Expected column headers for the xlsx import (case-insensitive). One row = one
+// category; `name_*`/`description_*` carry the per-language translation.
+export const CATEGORY_IMPORT_COLUMNS = [
+  'scope',
+  'code',
+  'sortOrder',
+  'isActive',
+  'name_my',
+  'description_my',
+  'name_en',
+  'description_en',
+] as const;

@@ -1,15 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type {
-  CreateRecipeInput,
-  ListRecipesQuery,
-  PaginatedRecipes,
-  Recipe,
-  RecipeStepInput,
-  RecipeTranslationInput,
-  UpdateRecipeInput,
+import {
+  createRecipeSchema,
+  type CreateRecipeInput,
+  type ImportResult,
+  type ListRecipesQuery,
+  type PaginatedRecipes,
+  type Recipe,
+  type RecipeStepInput,
+  type RecipeTranslationInput,
+  type UpdateRecipeInput,
 } from '@repo/contracts';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
+import { importRowsFromXlsx } from '../../common/xlsx-import.js';
+import { rowToRecipeInput } from './recipe-import.js';
 import { RECIPE_INCLUDE, toRecipe } from './recipe.response.js';
 
 /**
@@ -128,6 +132,20 @@ export class RecipesService {
 
   async remove(id: string): Promise<void> {
     await this.prisma.recipe.delete({ where: { id } });
+  }
+
+  /**
+   * Bulk-creates recipes from an xlsx buffer — core fields + MY/EN translations only
+   * (steps/categories are added later via the form). Delegates the parse/validate/
+   * create loop to the shared importer.
+   */
+  importFromXlsx(buffer: Buffer): Promise<ImportResult> {
+    return importRowsFromXlsx(buffer, {
+      rowToInput: rowToRecipeInput,
+      schema: createRecipeSchema,
+      createOne: (input) => this.create(input),
+      onConflictMessage: 'A recipe with this slug already exists.',
+    });
   }
 }
 

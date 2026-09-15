@@ -1,5 +1,4 @@
 import { ImageOff, Pencil, Search, Star, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
 
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -13,30 +12,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
+import { recipeStatusSchema, type RecipeStatus } from '@repo/contracts';
+
 import type { RecipeRow } from '@/features/recipes/types';
-import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
+import { RECIPE_DIFFICULTY_LABELS, RECIPE_STATUS_LABELS } from '@/features/recipes/labels';
 import { cn } from '@/shared/lib/utils';
+
+export type RecipeStatusFilter = 'all' | RecipeStatus;
 
 type RecipeTableProps = {
   recipes: RecipeRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  search: string;
+  onSearchChange: (value: string) => void;
+  status: RecipeStatusFilter;
+  onStatusChange: (value: RecipeStatusFilter) => void;
+  isLoading?: boolean;
   onEdit?: (recipe: RecipeRow) => void;
   onDelete?: (recipe: RecipeRow) => void;
 };
 
-const STATUS_FILTERS = ['all', 'DRAFT', 'PUBLISHED', 'ARCHIVED'] as const;
-const PAGE_SIZE = 8;
-
-const STATUS_LABELS: Record<RecipeRow['status'], string> = {
-  DRAFT: 'Draft',
-  PUBLISHED: 'Published',
-  ARCHIVED: 'Archived',
-};
-
-const DIFFICULTY_LABELS: Record<RecipeRow['difficulty'], string> = {
-  EASY: 'Easy',
-  MEDIUM: 'Medium',
-  HARD: 'Hard',
-};
+const STATUS_FILTERS: RecipeStatusFilter[] = ['all', ...recipeStatusSchema.options];
 
 function formatDuration(totalMinutes: number): string {
   if (totalMinutes <= 0) return '—';
@@ -47,52 +46,20 @@ function formatDuration(totalMinutes: number): string {
   return `${minutes}m`;
 }
 
-export function RecipeTable({ recipes, onEdit, onDelete }: RecipeTableProps) {
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState<(typeof STATUS_FILTERS)[number]>('all');
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [page, setPage] = useState(1);
-
-  // Filter on the debounced term so typing doesn't refilter on every keystroke.
-  const debouncedQuery = useDebouncedValue(query.trim(), 600);
-
-  const filtered = useMemo(() => {
-    return recipes.filter((recipe) => {
-      const matchesQuery = recipe.title.toLowerCase().includes(debouncedQuery.toLowerCase());
-      const matchesStatus = status === 'all' || recipe.status === status;
-      return matchesQuery && matchesStatus;
-    });
-  }, [recipes, debouncedQuery, status]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedQuery, status]);
-
-  const pageRows = useMemo(
-    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [filtered, page],
-  );
-
-  function toggleAll() {
-    setSelected((current) => {
-      if (pageRows.every((row) => current.has(row.id))) {
-        const next = new Set(current);
-        pageRows.forEach((row) => next.delete(row.id));
-        return next;
-      }
-      return new Set([...current, ...pageRows.map((row) => row.id)]);
-    });
-  }
-
-  function toggleOne(id: string) {
-    setSelected((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
+export function RecipeTable({
+  recipes,
+  total,
+  page,
+  pageSize,
+  onPageChange,
+  search,
+  onSearchChange,
+  status,
+  onStatusChange,
+  isLoading = false,
+  onEdit,
+  onDelete,
+}: RecipeTableProps) {
   const columns: DataTableColumn<RecipeRow>[] = [
     {
       id: 'image',
@@ -129,7 +96,7 @@ export function RecipeTable({ recipes, onEdit, onDelete }: RecipeTableProps) {
               recipe.status === 'PUBLISHED' ? 'bg-success' : 'bg-muted-foreground',
             )}
           />
-          {STATUS_LABELS[recipe.status]}
+          {RECIPE_STATUS_LABELS[recipe.status]}
         </Badge>
       ),
     },
@@ -137,7 +104,7 @@ export function RecipeTable({ recipes, onEdit, onDelete }: RecipeTableProps) {
       id: 'difficulty',
       header: 'Difficulty',
       cell: (recipe) => (
-        <span className="text-muted-foreground">{DIFFICULTY_LABELS[recipe.difficulty]}</span>
+        <span className="text-muted-foreground">{RECIPE_DIFFICULTY_LABELS[recipe.difficulty]}</span>
       ),
     },
     {
@@ -192,43 +159,36 @@ export function RecipeTable({ recipes, onEdit, onDelete }: RecipeTableProps) {
             aria-label="Search recipes"
             className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             placeholder="Search recipes..."
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
           />
         </div>
-        <Select
-          value={status}
-          onValueChange={(value) => setStatus(value as (typeof STATUS_FILTERS)[number])}
-        >
+        <Select value={status} onValueChange={(value) => onStatusChange(value as RecipeStatusFilter)}>
           <SelectTrigger aria-label="Filter by status" className="sm:w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All status</SelectItem>
-            <SelectItem value="DRAFT">Draft</SelectItem>
-            <SelectItem value="PUBLISHED">Published</SelectItem>
-            <SelectItem value="ARCHIVED">Archived</SelectItem>
+            {STATUS_FILTERS.map((value) => (
+              <SelectItem key={value} value={value}>
+                {value === 'all' ? 'All status' : RECIPE_STATUS_LABELS[value]}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
       <DataTable
         columns={columns}
-        rows={pageRows}
+        rows={recipes}
         getRowId={(recipe) => recipe.id}
-        selectable
-        selectedIds={selected}
-        onToggleRow={toggleOne}
-        onToggleAll={toggleAll}
-        rowLabel={(recipe) => recipe.title}
-        emptyMessage="No recipes found."
+        emptyMessage={isLoading ? 'Loading…' : 'No recipes found.'}
       />
 
       <Pagination
         page={page}
-        pageSize={PAGE_SIZE}
-        totalCount={filtered.length}
-        onPageChange={setPage}
+        pageSize={pageSize}
+        totalCount={total}
+        onPageChange={onPageChange}
         itemLabel="recipes"
       />
     </Card>
