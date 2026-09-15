@@ -9,19 +9,28 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   createRecipeSchema,
   listRecipesQuerySchema,
   updateRecipeSchema,
   type CreateRecipeInput,
+  type ImportResult,
   type ListRecipesQuery,
   type PaginatedRecipes,
   type Recipe,
   type UpdateRecipeInput,
 } from '@repo/contracts';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe.js';
+import {
+  MAX_IMPORT_BYTES,
+  requireXlsxBuffer,
+  type UploadedXlsx,
+} from '../../common/xlsx-import.js';
 import { SupabaseJwtGuard } from '../auth/supabase-jwt.guard.js';
 import { RecipesService } from './recipes.service.js';
 
@@ -50,6 +59,12 @@ export class RecipesController {
     input: CreateRecipeInput,
   ): Promise<Recipe> {
     return this.recipes.create(input);
+  }
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_IMPORT_BYTES } }))
+  import(@UploadedFile() file?: UploadedXlsx): Promise<ImportResult> {
+    return this.recipes.importFromXlsx(requireXlsxBuffer(file));
   }
 
   @Patch(':id')

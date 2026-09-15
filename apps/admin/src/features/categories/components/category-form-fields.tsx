@@ -13,7 +13,7 @@ import {
 } from '@/shared/components/ui/select';
 import { Switch } from '@/shared/components/ui/switch';
 import { Textarea } from '@/shared/components/ui/textarea';
-import { SvgUploadField } from '@/features/categories/components/svg-upload-field';
+import { SvgUploadField } from '@/shared/components/svg-upload-field';
 import {
   DESCRIPTION_MAX,
   LANGUAGES,

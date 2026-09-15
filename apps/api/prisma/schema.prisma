@@ -169,8 +169,7 @@ model Ingredient {
   categoryId    String   @db.Uuid
   defaultUnitId String?  @db.Uuid
   emoji         String?
-  lightIconPath String?
-  darkIconPath  String?
+  iconPath      String?
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

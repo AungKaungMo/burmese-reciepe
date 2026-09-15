@@ -1,57 +1,34 @@
 import { Plus } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
-import type { ListCategoriesQuery } from '@repo/contracts';
-
-import {
-  CategoryTable,
-  type CategoryStatusFilter,
-} from '@/features/categories/components/category-table';
-import { useCategories, useDeleteCategory } from '@/features/categories/api/queries';
-import { toCategoryRow, type CategoryRow } from '@/features/categories/types';
+import { CategoryTable } from '@/features/categories/components/category-table';
+import { useCategoriesPage } from '@/features/categories/hooks/use-categories-page';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
-import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
-
-const PAGE_SIZE = 8;
+import { ImportButton } from '@/shared/components/import-button';
+import { ImportResultCard } from '@/shared/components/import-result-card';
 
 export function CategoriesPage() {
-  const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<CategoryStatusFilter>('all');
-  const [page, setPage] = useState(1);
-
-  const debouncedSearch = useDebouncedValue(search.trim(), 600);
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, status]);
-
-  const query = useMemo<ListCategoriesQuery>(
-    () => ({
-      page,
-      pageSize: PAGE_SIZE,
-      ...(debouncedSearch ? { search: debouncedSearch } : {}),
-      ...(status !== 'all' ? { isActive: status === 'active' } : {}),
-    }),
-    [page, debouncedSearch, status],
-  );
-
-  const { data, isPending, isError, error } = useCategories(query);
-  const deleteCategory = useDeleteCategory();
-
-  const rows = useMemo(() => (data?.items ?? []).map(toCategoryRow), [data]);
-
-  function handleEdit(category: CategoryRow) {
-    navigate(`/categories/${category.id}/edit`);
-  }
-
-  function handleDelete(category: CategoryRow) {
-    if (window.confirm(`Delete “${category.name}”? This cannot be undone.`)) {
-      deleteCategory.mutate(category.id);
-    }
-  }
+  const {
+    rows,
+    total,
+    pageSize,
+    isPending,
+    isError,
+    error,
+    page,
+    setPage,
+    search,
+    setSearch,
+    status,
+    setStatus,
+    importResult,
+    dismissImportResult,
+    onImport,
+    isImporting,
+    onEdit,
+    onDelete,
+  } = useCategoriesPage();
 
   return (
     <>
@@ -60,12 +37,19 @@ export function CategoriesPage() {
           <h1 className="text-3xl font-semibold tracking-tight">Categories</h1>
           <p className="mt-1 text-sm text-muted-foreground">Organize your recipes into categories to make them easier to find.</p>
         </div>
-        <Button asChild className="w-full sm:w-auto">
-          <Link to="/categories/new">
-            <Plus className="size-4" /> Add Category
-          </Link>
-        </Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <ImportButton onFile={onImport} isPending={isImporting} />
+          <Button asChild className="w-full sm:w-auto">
+            <Link to="/categories/new">
+              <Plus className="size-4" /> Add Category
+            </Link>
+          </Button>
+        </div>
       </section>
+
+      {importResult && (
+        <ImportResultCard result={importResult} onDismiss={dismissImportResult} />
+      )}
 
       <div className="mt-6">
         {isError ? (
@@ -75,17 +59,17 @@ export function CategoriesPage() {
         ) : (
           <CategoryTable
             categories={rows}
-            total={data?.total ?? 0}
+            total={total}
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             onPageChange={setPage}
             search={search}
             onSearchChange={setSearch}
             status={status}
             onStatusChange={setStatus}
             isLoading={isPending}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
+            onEdit={onEdit}
+            onDelete={onDelete}
           />
         )}
       </div>

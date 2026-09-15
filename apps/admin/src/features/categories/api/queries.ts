@@ -12,6 +12,7 @@ import {
   deleteCategory,
   fetchCategories,
   fetchCategory,
+  importCategories,
   updateCategory,
 } from './categories';
 
@@ -80,5 +81,26 @@ export function useDeleteCategory() {
       toast.success('Category deleted.');
     },
     onError: toastError('Failed to delete category.'),
+  });
+}
+
+export function useImportCategories() {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => importCategories(file),
+    onSuccess: (result) => {
+      client.invalidateQueries({ queryKey: categoryKeys.all });
+      if (result.created > 0) {
+        toast.success(`Imported ${result.created} categor${result.created === 1 ? 'y' : 'ies'}.`);
+      }
+      if (result.failed > 0) {
+        toast.error(`${result.failed} row${result.failed === 1 ? '' : 's'} could not be imported.`);
+      }
+      if (result.created === 0 && result.failed === 0) {
+        toast.info('The spreadsheet had no rows to import.');
+      }
+    },
+    onError: toastError('Failed to import categories.'),
   });
 }

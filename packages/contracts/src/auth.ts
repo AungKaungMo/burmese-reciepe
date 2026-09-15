@@ -8,11 +8,8 @@ import { z } from 'zod';
  * claims. Shared across the API (token verification) and clients (typed session).
  */
 export const authUserSchema = z.object({
-  /** Supabase auth user id (JWT `sub` claim). Also the `Profile.id`. */
   id: z.uuid(),
-  /** Verified email, when present on the token. */
   email: z.email().nullable(),
-  /** Supabase role claim, e.g. `authenticated`. */
   role: z.string().nullable(),
 });
 

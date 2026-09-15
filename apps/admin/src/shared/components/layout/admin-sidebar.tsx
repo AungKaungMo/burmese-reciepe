@@ -23,9 +23,6 @@ const navigation = [
   { label: 'Categories', icon: LayoutGrid, to: '/categories' },
   { label: 'Meal Plans', icon: CalendarDays, to: '/meal-plans' },
   { label: 'Subscriptions', icon: Crown, to: '/subscriptions' },
-  { label: 'Users', icon: Users, to: '/users' },
-  { label: 'Media', icon: ImageIcon, to: '/media' },
-  { label: 'Comments', icon: MessageSquare, to: '/comments' },
   { label: 'Analytics', icon: ChartNoAxesCombined, to: '/analytics' },
   { label: 'Settings', icon: Settings, to: '/settings' },
 ] as const;

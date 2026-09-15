@@ -1,5 +1,4 @@
 import { ImageOff, Pencil, Search, Trash2 } from 'lucide-react';
-import { useState } from 'react';
 
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -47,28 +46,6 @@ export function CategoryTable({
   onEdit,
   onDelete,
 }: CategoryTableProps) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-
-  function toggleAll() {
-    setSelected((current) => {
-      if (categories.every((row) => current.has(row.id))) {
-        const next = new Set(current);
-        categories.forEach((row) => next.delete(row.id));
-        return next;
-      }
-      return new Set([...current, ...categories.map((row) => row.id)]);
-    });
-  }
-
-  function toggleOne(id: string) {
-    setSelected((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
   const columns: DataTableColumn<CategoryRow>[] = [
     {
       id: 'image',
@@ -172,11 +149,6 @@ export function CategoryTable({
         columns={columns}
         rows={categories}
         getRowId={(category) => category.id}
-        selectable
-        selectedIds={selected}
-        onToggleRow={toggleOne}
-        onToggleAll={toggleAll}
-        rowLabel={(category) => category.name}
         emptyMessage={isLoading ? 'Loading…' : 'No categories found.'}
       />
 

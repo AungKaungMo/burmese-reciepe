@@ -1,13 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type {
-  Category,
-  CreateCategoryInput,
-  ListCategoriesQuery,
-  PaginatedCategories,
-  UpdateCategoryInput,
+import {
+  createCategorySchema,
+  type Category,
+  type CreateCategoryInput,
+  type ImportResult,
+  type ListCategoriesQuery,
+  type PaginatedCategories,
+  type UpdateCategoryInput,
 } from '@repo/contracts';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
+import { importRowsFromXlsx } from '../../common/xlsx-import.js';
+import { rowToCategoryInput } from './category-import.js';
 import { toCategory } from './category.response.js';
 
 /**
@@ -123,5 +127,18 @@ export class CategoriesService {
 
   async remove(id: string): Promise<void> {
     await this.prisma.category.delete({ where: { id } });
+  }
+
+  /**
+   * Bulk-creates categories from an xlsx buffer via the shared importer, which
+   * validates + creates each row independently and collects the failures.
+   */
+  importFromXlsx(buffer: Buffer): Promise<ImportResult> {
+    return importRowsFromXlsx(buffer, {
+      rowToInput: rowToCategoryInput,
+      schema: createCategorySchema,
+      createOne: (input) => this.create(input),
+      onConflictMessage: 'A category with this code already exists for the scope.',
+    });
   }
 }

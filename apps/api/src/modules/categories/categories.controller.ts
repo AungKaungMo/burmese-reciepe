@@ -9,19 +9,28 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   createCategorySchema,
   listCategoriesQuerySchema,
   updateCategorySchema,
   type Category,
   type CreateCategoryInput,
+  type ImportResult,
   type ListCategoriesQuery,
   type PaginatedCategories,
   type UpdateCategoryInput,
 } from '@repo/contracts';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe.js';
+import {
+  MAX_IMPORT_BYTES,
+  requireXlsxBuffer,
+  type UploadedXlsx,
+} from '../../common/xlsx-import.js';
 import { SupabaseJwtGuard } from '../auth/supabase-jwt.guard.js';
 import { CategoriesService } from './categories.service.js';
 
@@ -50,6 +59,12 @@ export class CategoriesController {
     input: CreateCategoryInput,
   ): Promise<Category> {
     return this.categories.create(input);
+  }
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_IMPORT_BYTES } }))
+  import(@UploadedFile() file?: UploadedXlsx): Promise<ImportResult> {
+    return this.categories.importFromXlsx(requireXlsxBuffer(file));
   }
 
   @Patch(':id')

@@ -10,7 +10,7 @@ export function AdminLayout() {
       <AdminSidebar />
       <main className="flex min-h-screen min-w-0 flex-col">
         <AdminNavbar />
-        <div className="mx-auto w-full max-w-[90rem] flex-1 p-4 sm:p-6 xl:p-8">
+        <div className="mx-auto w-full max-w-360 flex-1 p-4 sm:p-6 xl:p-8">
           <Outlet />
         </div>
         <AdminFooter />

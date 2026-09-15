@@ -1,8 +1,10 @@
 import {
   categorySchema,
+  importResultSchema,
   paginatedCategoriesSchema,
   type Category,
   type CreateCategoryInput,
+  type ImportResult,
   type ListCategoriesQuery,
   type PaginatedCategories,
   type UpdateCategoryInput,
@@ -40,4 +42,13 @@ export async function updateCategory(
 
 export async function deleteCategory(id: string): Promise<void> {
   await api.delete(`/v1/categories/${id}`);
+}
+
+/** Uploads an xlsx file to bulk-create categories; returns the per-row outcome. */
+export async function importCategories(file: File): Promise<ImportResult> {
+  const formData = new FormData();
+  formData.append('file', file);
+  // Let the browser set the multipart boundary; the `api` interceptor adds the bearer.
+  const { data } = await api.post('/v1/categories/import', formData);
+  return importResultSchema.parse(data);
 }
