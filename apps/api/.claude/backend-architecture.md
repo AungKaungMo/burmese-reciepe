@@ -4,7 +4,7 @@ Use this reference when creating or changing the API application.
 
 ## Runtime and boundaries
 
-Use a modular monolith with NestJS and the Fastify adapter. A request should normally flow through:
+Use a modular monolith with NestJS and the Express adapter (the NestJS default). A request should normally flow through:
 
 ```text
 HTTP controller
@@ -94,3 +94,32 @@ Example authenticated routes:
 GET    /v1/me
 GET    /v1/me/favourites
 POST   /v1/me/favourites
+```
+
+## Local development environment
+
+The database is Supabase. For local work we run the Supabase stack in Docker via
+the CLI instead of a hosted project. The stack config lives at the repo root
+(`/supabase/config.toml`).
+
+```text
+supabase start     # boot local Postgres + Auth + Studio (from repo root)
+supabase status    # re-print local URLs, keys and JWT secret
+supabase stop      # shut the stack down
+```
+
+Local connection details are fixed:
+
+- Postgres: `postgresql://postgres:postgres@127.0.0.1:54322/postgres`
+- API/Auth URL: `http://127.0.0.1:54321`  ·  Studio: `http://127.0.0.1:54323`
+
+Copy `apps/api/.env.example` to `apps/api/.env` and fill it with the values from
+`supabase status`. Locally there is no connection pooler, so `DATABASE_URL` and
+`DIRECT_URL` both use the direct `:54322` port.
+
+Data layer uses Prisma 7: connection URLs live in `prisma.config.ts` (CLI /
+migrations) and reach `PrismaClient` through the `@prisma/adapter-pg` driver
+adapter (`src/prisma/prisma.service.ts`). The generated client is written to
+`src/generated/prisma` (gitignored) — run `pnpm --filter api prisma:generate`
+after changing `schema.prisma`, and `pnpm --filter api db:migrate` to create and
+apply migrations against the local database.
