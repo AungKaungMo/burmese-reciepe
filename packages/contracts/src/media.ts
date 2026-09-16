@@ -9,7 +9,13 @@ export const uploadContentTypeSchema = z.enum([
 export type UploadContentType = z.infer<typeof uploadContentTypeSchema>;
 
 /** Logical storage folders (object-key prefixes) in the bucket. */
-export const uploadFolderSchema = z.enum(['categories', 'recipes', 'ingredients', 'avatars']);
+export const uploadFolderSchema = z.enum([
+  'categories',
+  'recipes',
+  'ingredients',
+  'nutrients',
+  'avatars',
+]);
 export type UploadFolder = z.infer<typeof uploadFolderSchema>;
 
 /**

@@ -30,11 +30,11 @@ export function AdminNavbar() {
   }
 
   return (
-    <header className="sticky top-0 z-10 flex h-[4.8rem] items-center gap-3 border-b border-border bg-card/90 px-4 shadow-[0_1px_7px_rgb(43_33_27/0.04)] backdrop-blur sm:px-6 xl:px-8">
+    <header className="sticky top-0 z-10 flex h-[4.8rem] items-center justify-end gap-3 border-b border-border bg-card/90 px-4 shadow-[0_1px_7px_rgb(43_33_27/0.04)] backdrop-blur sm:px-6 xl:px-8">
       <Button className="lg:hidden" size="icon" variant="outline" aria-label="Open navigation">
         <Menu className="size-4" />
       </Button>
-      <div className="flex h-10 max-w-185 flex-1 items-center gap-3 rounded-lg border bg-muted/40 px-3 shadow-xs">
+      {/* <div className="flex h-10 max-w-185 flex-1 items-center gap-3 rounded-lg border bg-muted/40 px-3 shadow-xs">
         <Search className="size-4 shrink-0 text-muted-foreground" />
         <input
           aria-label="Search"
@@ -42,7 +42,7 @@ export function AdminNavbar() {
           placeholder="Search recipes, ingredients, users..."
         />
         <kbd className="hidden rounded bg-muted px-2 py-1 text-[11px] text-muted-foreground sm:block">⌘ K</kbd>
-      </div>
+      </div> */}
       <Button className="hidden sm:inline-flex" size="icon" variant="ghost" aria-label="Toggle color theme" onClick={() => setDark((current) => !current)}>
         {dark ? <Moon className="size-5" /> : <Sun className="size-5" />}
       </Button>

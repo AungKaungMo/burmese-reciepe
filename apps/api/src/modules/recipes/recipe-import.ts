@@ -7,9 +7,9 @@ import {
 
 /**
  * Maps one spreadsheet row to a candidate recipe payload — core fields + MY/EN
- * translations only. Steps and category links aren't part of the flat import; add
- * them later via the edit form. Enum/number cells left blank fall back to the
- * schema defaults; invalid values are rejected by `createRecipeSchema`.
+ * translations only. Steps, ingredients and category links aren't part of the flat
+ * import; add them later via the edit form. Enum/number cells left blank fall back to
+ * the schema defaults; invalid values are rejected by `createRecipeSchema`.
  */
 export function rowToRecipeInput(raw: Record<string, unknown>): unknown {
   const row = normalizeRow(raw);
@@ -46,5 +46,6 @@ export function rowToRecipeInput(raw: Record<string, unknown>): unknown {
     translations,
     categoryIds: [],
     steps: [],
+    recipeIngredients: [],
   };
 }

@@ -1,8 +1,12 @@
-import { GripVertical, Languages, ListOrdered, Plus, SlidersHorizontal, Tags, Trash2 } from 'lucide-react';
+import { Carrot, GripVertical, Languages, ListOrdered, Plus, SlidersHorizontal, Tags, Trash2 } from 'lucide-react';
 import { Controller, useFieldArray, type UseFormReturn } from 'react-hook-form';
+
+import type { Ingredient, MeasurementUnit } from '@repo/contracts';
 
 import { useCategories } from '@/features/categories/api/queries';
 import { toCategoryRow } from '@/features/categories/types';
+import { useAllIngredients } from '@/features/ingredients/api/queries';
+import { useAllMeasurementUnits } from '@/features/measurement-units/api/queries';
 import { ImageUploadField } from '@/features/recipes/components/image-upload-field';
 import {
   RECIPE_DIFFICULTY_OPTIONS,
@@ -13,6 +17,7 @@ import {
   LANGUAGES,
   SUMMARY_MAX,
   TITLE_MAX,
+  emptyRecipeIngredient,
   emptyStep,
   type RecipeFormValues,
 } from '@/features/recipes/hooks/use-recipe-form';
@@ -31,29 +36,21 @@ import {
 import { Switch } from '@/shared/components/ui/switch';
 import { Textarea } from '@/shared/components/ui/textarea';
 
-type RecipeFormFieldsProps = {
+type DetailsCardProps = {
   form: UseFormReturn<RecipeFormValues>;
   cover: File | null;
   onCoverChange: (file: File | null) => void;
   currentCoverUrl?: string | null;
 };
 
-export function RecipeFormFields({
-  form,
-  cover,
-  onCoverChange,
-  currentCoverUrl,
-}: RecipeFormFieldsProps) {
+/** Localized text fields (title/summary/overview + list fields) per language. */
+export function TranslationsCard({ form }: { form: UseFormReturn<RecipeFormValues> }) {
   const {
     register,
     formState: { errors },
   } = form;
 
   return (
-    <>
-      <DetailsCard form={form} cover={cover} onCoverChange={onCoverChange} currentCoverUrl={currentCoverUrl} />
-      <CategoriesCard form={form} />
-
       <Card className="flex flex-col gap-5 p-5">
         <div className="flex items-center gap-2">
           <Languages className="size-4 text-primary" />
@@ -140,18 +137,192 @@ export function RecipeFormFields({
           </div>
         ))}
       </Card>
-
-      <StepsCard form={form} />
-    </>
   );
 }
 
-function DetailsCard({
+/** EN-first display label for the ingredient picker. */
+function ingredientLabel(ingredient: Ingredient): string {
+  const t = ingredient.translations.find((item) => item.languageCode === 'EN') ?? ingredient.translations[0];
+  return t?.name ?? ingredient.code;
+}
+
+/** EN-first display label for the unit picker, e.g. "Gram (g)". */
+function unitLabel(unit: MeasurementUnit): string {
+  const t = unit.translations.find((item) => item.languageCode === 'EN') ?? unit.translations[0];
+  return t?.name ? `${t.name} (${unit.symbol})` : unit.symbol;
+}
+
+/** Sentinel for "no unit" — Radix Select items can't hold an empty string value. */
+const NO_UNIT = '__none__';
+
+export function IngredientsCard({ form }: { form: UseFormReturn<RecipeFormValues> }) {
+  const {
+    control,
+    register,
+    formState: { errors },
+  } = form;
+  const { fields, append, remove } = useFieldArray({ control, name: 'recipeIngredients' });
+
+  const { data: ingredients = [] } = useAllIngredients();
+  const { data: units = [] } = useAllMeasurementUnits();
+
+  return (
+    <Card className="flex flex-col gap-4 p-5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Carrot className="size-4 text-primary" />
+          <h2 className="text-base font-semibold tracking-tight">Ingredients</h2>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => append(emptyRecipeIngredient())}
+        >
+          <Plus className="size-4" /> Add ingredient
+        </Button>
+      </div>
+
+      {fields.length === 0 && (
+        <p className="text-sm text-muted-foreground">No ingredients yet. Add the first one.</p>
+      )}
+
+      {fields.map((fieldItem, index) => (
+        <div key={fieldItem.id} className="flex flex-col gap-4 rounded-lg border border-border p-4">
+          <div className="flex items-start gap-3">
+            <GripVertical className="mt-2.5 size-4 shrink-0 text-muted-foreground" />
+
+            <div className="grid flex-1 gap-3 sm:grid-cols-[2fr_1fr_1.5fr_auto]">
+              {/* Ingredient picker */}
+              <div className="flex flex-col gap-1.5">
+                <Label>
+                  Ingredient <span className="text-primary">*</span>
+                </Label>
+                <Controller
+                  control={control}
+                  name={`recipeIngredients.${index}.ingredientId`}
+                  render={({ field }) => (
+                    <Select value={field.value || undefined} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select ingredient" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ingredients.map((ingredient) => (
+                          <SelectItem key={ingredient.id} value={ingredient.id}>
+                            {ingredientLabel(ingredient)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.recipeIngredients?.[index]?.ingredientId && (
+                  <p className="text-xs text-destructive">
+                    {errors.recipeIngredients[index]?.ingredientId?.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Quantity */}
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`ri-${index}-qty`}>Quantity</Label>
+                <Input
+                  id={`ri-${index}-qty`}
+                  inputMode="decimal"
+                  placeholder="e.g. 150"
+                  {...register(`recipeIngredients.${index}.quantity`)}
+                />
+                {errors.recipeIngredients?.[index]?.quantity && (
+                  <p className="text-xs text-destructive">
+                    {errors.recipeIngredients[index]?.quantity?.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Unit */}
+              <div className="flex flex-col gap-1.5">
+                <Label>Unit</Label>
+                <Controller
+                  control={control}
+                  name={`recipeIngredients.${index}.unitId`}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || NO_UNIT}
+                      onValueChange={(value) => field.onChange(value === NO_UNIT ? '' : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NO_UNIT}>No unit</SelectItem>
+                        {units.map((unit) => (
+                          <SelectItem key={unit.id} value={unit.id}>
+                            {unitLabel(unit)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+
+              {/* Remove */}
+              <div className="flex items-end">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="size-9 text-muted-foreground"
+                  aria-label={`Remove ingredient ${index + 1}`}
+                  onClick={() => remove(index)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pl-7">
+            <Controller
+              control={control}
+              name={`recipeIngredients.${index}.isOptional`}
+              render={({ field }) => (
+                <label className="flex cursor-pointer items-center gap-2 text-sm">
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  <span className="text-muted-foreground">Optional</span>
+                </label>
+              )}
+            />
+          </div>
+
+          {/* Localized notes */}
+          <div className="grid gap-3 pl-7 sm:grid-cols-2">
+            {LANGUAGES.map((language) => (
+              <div key={language.code} className="flex flex-col gap-2 rounded-md bg-muted/30 p-3">
+                <span className="text-xs font-medium text-muted-foreground">{language.label}</span>
+                <Input
+                  placeholder="Preparation note (e.g. finely chopped)"
+                  {...register(`recipeIngredients.${index}.notes.${language.code}.preparationNote`)}
+                />
+                <Input
+                  placeholder="Amount note (e.g. about 1 large)"
+                  {...register(`recipeIngredients.${index}.notes.${language.code}.amountNote`)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </Card>
+  );
+}
+
+export function DetailsCard({
   form,
   cover,
   onCoverChange,
   currentCoverUrl,
-}: RecipeFormFieldsProps) {
+}: DetailsCardProps) {
   const {
     register,
     control,
@@ -318,7 +489,7 @@ function DetailsCard({
   );
 }
 
-function CategoriesCard({ form }: { form: UseFormReturn<RecipeFormValues> }) {
+export function CategoriesCard({ form }: { form: UseFormReturn<RecipeFormValues> }) {
   const { data, isPending } = useCategories({ page: 1, pageSize: 100, scope: 'RECIPE' });
   const categories = (data?.items ?? []).map(toCategoryRow);
 
@@ -368,7 +539,7 @@ function CategoriesCard({ form }: { form: UseFormReturn<RecipeFormValues> }) {
   );
 }
 
-function StepsCard({ form }: { form: UseFormReturn<RecipeFormValues> }) {
+export function StepsCard({ form }: { form: UseFormReturn<RecipeFormValues> }) {
   const {
     register,
     control,

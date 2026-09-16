@@ -2,7 +2,7 @@ import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 
 import { useRecipe } from '@/features/recipes/api/queries';
-import { RecipeFormFields } from '@/features/recipes/components/recipe-form-fields';
+import { RecipeFormWizard } from '@/features/recipes/components/recipe-form-wizard';
 import { useRecipeForm } from '@/features/recipes/hooks/use-recipe-form';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
@@ -57,28 +57,6 @@ function RecipeEditForm({
 }: {
   recipe: NonNullable<ReturnType<typeof useRecipe>['data']>;
 }) {
-  const { form, submit, cover, setCover, currentCoverUrl, isBusy, isUploading, isSaving, errorMessage } =
-    useRecipeForm(recipe);
-
-  return (
-    <form onSubmit={submit} noValidate className="flex flex-col gap-6">
-      <RecipeFormFields
-        form={form}
-        cover={cover}
-        onCoverChange={setCover}
-        currentCoverUrl={currentCoverUrl}
-      />
-
-      {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
-
-      <div className="flex items-center justify-end gap-3">
-        <Button type="button" variant="outline" disabled={isBusy} asChild>
-          <Link to="/recipes">Cancel</Link>
-        </Button>
-        <Button type="submit" disabled={isBusy}>
-          {isUploading ? 'Uploading…' : isSaving ? 'Saving…' : 'Save Changes'}
-        </Button>
-      </div>
-    </form>
-  );
+  const api = useRecipeForm(recipe);
+  return <RecipeFormWizard api={api} submitLabel="Save Changes" />;
 }

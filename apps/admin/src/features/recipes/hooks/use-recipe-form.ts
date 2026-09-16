@@ -54,6 +54,29 @@ const stepFieldSchema = z.object({
   }),
 });
 
+// An ingredient row as the form holds it: the picked ingredient/unit ids, a text
+// `quantity` (empty → null), and per-language notes (mapped empty → null on submit).
+const ingredientNoteFieldSchema = z.object({
+  preparationNote: z.string(),
+  amountNote: z.string(),
+});
+
+const recipeIngredientFieldSchema = z.object({
+  ingredientId: z.uuid('Select an ingredient.'),
+  unitId: z.string(),
+  quantity: z
+    .string()
+    .refine(
+      (value) => value.trim() === '' || (!Number.isNaN(Number(value)) && Number(value) >= 0),
+      'Enter a valid amount.',
+    ),
+  isOptional: z.boolean(),
+  notes: z.object({
+    MY: ingredientNoteFieldSchema,
+    EN: ingredientNoteFieldSchema,
+  }),
+});
+
 export const recipeFormSchema = z
   .object({
     slug: recipeSchema.shape.slug,
@@ -71,6 +94,7 @@ export const recipeFormSchema = z
       EN: translationFieldSchema,
     }),
     steps: z.array(stepFieldSchema),
+    recipeIngredients: z.array(recipeIngredientFieldSchema),
   })
   .superRefine((values, ctx) => {
     // Myanmar is the primary language, so every step must carry an MY instruction;
@@ -110,7 +134,19 @@ const EMPTY_VALUES: RecipeFormValues = {
   categoryIds: [],
   translations: { MY: { ...EMPTY_TRANSLATION }, EN: { ...EMPTY_TRANSLATION } },
   steps: [],
+  recipeIngredients: [],
 };
+
+export function emptyRecipeIngredient(): RecipeFormValues['recipeIngredients'][number] {
+  const emptyNote = { preparationNote: '', amountNote: '' };
+  return {
+    ingredientId: '',
+    unitId: '',
+    quantity: '',
+    isOptional: false,
+    notes: { MY: { ...emptyNote }, EN: { ...emptyNote } },
+  };
+}
 
 export function emptyStep(): RecipeFormValues['steps'][number] {
   const emptyStepTranslation = {
@@ -185,6 +221,26 @@ function toFormValues(recipe: Recipe): RecipeFormValues {
           EN: stepTranslationFor(step, 'EN'),
         },
       })),
+    recipeIngredients: [...recipe.recipeIngredients]
+      .sort((a, b) => a.position - b.position)
+      .map((ingredient) => ({
+        ingredientId: ingredient.ingredientId,
+        unitId: ingredient.unitId ?? '',
+        quantity: ingredient.quantity != null ? String(ingredient.quantity) : '',
+        isOptional: ingredient.isOptional,
+        notes: {
+          MY: ingredientNoteFor(ingredient, 'MY'),
+          EN: ingredientNoteFor(ingredient, 'EN'),
+        },
+      })),
+  };
+}
+
+function ingredientNoteFor(ingredient: Recipe['recipeIngredients'][number], code: LanguageCode) {
+  const t = ingredient.translations.find((item) => item.languageCode === code);
+  return {
+    preparationNote: t?.preparationNote ?? '',
+    amountNote: t?.amountNote ?? '',
   };
 }
 
@@ -233,6 +289,22 @@ function toPayload(values: RecipeFormValues, coverImagePath: string | null): Cre
           warning: emptyToNull(t.warning),
         };
       }),
+    })),
+    recipeIngredients: values.recipeIngredients.map((ingredient) => ({
+      ingredientId: ingredient.ingredientId,
+      unitId: ingredient.unitId ? ingredient.unitId : null,
+      quantity: ingredient.quantity.trim() ? Number(ingredient.quantity) : null,
+      isOptional: ingredient.isOptional,
+      // Only send a language's notes when at least one field is filled.
+      translations: LANGUAGES.filter(
+        ({ code }) =>
+          ingredient.notes[code].preparationNote.trim() ||
+          ingredient.notes[code].amountNote.trim(),
+      ).map(({ code }) => ({
+        languageCode: code,
+        preparationNote: emptyToNull(ingredient.notes[code].preparationNote),
+        amountNote: emptyToNull(ingredient.notes[code].amountNote),
+      })),
     })),
   };
 }
