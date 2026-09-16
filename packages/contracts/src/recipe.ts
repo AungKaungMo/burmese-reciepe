@@ -50,6 +50,32 @@ export const recipeStepSchema = z.object({
 });
 export type RecipeStep = z.infer<typeof recipeStepSchema>;
 
+/**
+ * A single ingredient row's localized notes (`recipe_ingredient_translations`).
+ * `languageCode` here is a free-form code (`VarChar(10)`), not the `LanguageCode` enum.
+ */
+export const recipeIngredientTranslationSchema = z.object({
+  languageCode: z.string().min(1).max(10),
+  preparationNote: z.string().nullable(),
+  amountNote: z.string().nullable(),
+});
+export type RecipeIngredientTranslation = z.infer<typeof recipeIngredientTranslationSchema>;
+
+/**
+ * A recipe's use of an ingredient (`recipe_ingredients`): which ingredient, how much
+ * (`quantity` in `unitId`), its `position`, whether it's optional, and localized notes.
+ */
+export const recipeIngredientSchema = z.object({
+  id: z.uuid(),
+  ingredientId: z.uuid(),
+  unitId: z.uuid().nullable(),
+  quantity: z.number().nullable(),
+  position: z.number().int().nonnegative(),
+  isOptional: z.boolean(),
+  translations: z.array(recipeIngredientTranslationSchema),
+});
+export type RecipeIngredient = z.infer<typeof recipeIngredientSchema>;
+
 /** The `recipes` row plus its `translations`, ordered `steps`, and linked category ids. */
 export const recipeSchema = z.object({
   id: z.uuid(),
@@ -69,6 +95,7 @@ export const recipeSchema = z.object({
   translations: z.array(recipeTranslationSchema),
   categoryIds: z.array(z.uuid()),
   steps: z.array(recipeStepSchema),
+  recipeIngredients: z.array(recipeIngredientSchema),
 });
 export type Recipe = z.infer<typeof recipeSchema>;
 
@@ -102,6 +129,29 @@ export const recipeStepInputSchema = z.object({
 });
 export type RecipeStepInput = z.infer<typeof recipeStepInputSchema>;
 
+/** Ingredient-row translation payload for writes — optional notes fall back to `null`. */
+export const recipeIngredientTranslationInputSchema = z.object({
+  languageCode: z.string().min(1).max(10),
+  preparationNote: z.string().nullable().optional(),
+  amountNote: z.string().nullable().optional(),
+});
+export type RecipeIngredientTranslationInput = z.infer<
+  typeof recipeIngredientTranslationInputSchema
+>;
+
+/**
+ * Ingredient-row payload for writes. `position` is assigned by array order on the
+ * server, so it is not sent. `unitId`/`quantity` are optional.
+ */
+export const recipeIngredientInputSchema = z.object({
+  ingredientId: z.uuid(),
+  unitId: z.uuid().nullable().optional(),
+  quantity: z.number().nonnegative().nullable().optional(),
+  isOptional: z.boolean().default(false),
+  translations: z.array(recipeIngredientTranslationInputSchema).default([]),
+});
+export type RecipeIngredientInput = z.infer<typeof recipeIngredientInputSchema>;
+
 /**
  * Payload to create a recipe (`POST /v1/recipes`). Fields with DB defaults may be
  * omitted. At least one translation is required; `categoryIds`/`steps` default empty.
@@ -121,6 +171,7 @@ export const createRecipeSchema = z.object({
   translations: z.array(recipeTranslationInputSchema).min(1),
   categoryIds: z.array(z.uuid()).default([]),
   steps: z.array(recipeStepInputSchema).default([]),
+  recipeIngredients: z.array(recipeIngredientInputSchema).default([]),
 });
 export type CreateRecipeInput = z.infer<typeof createRecipeSchema>;
 

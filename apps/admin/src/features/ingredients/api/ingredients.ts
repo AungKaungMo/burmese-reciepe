@@ -19,6 +19,16 @@ export async function fetchIngredients(
   return paginatedIngredientsSchema.parse(data);
 }
 
+/**
+ * Loads ingredients for the recipe ingredient picker, up to the API's max page size
+ * of 100. Ingredients are the most likely list to outgrow that — when they do, move
+ * this picker to a server-side searchable combobox instead of raising the cap.
+ */
+export async function fetchAllIngredients(): Promise<Ingredient[]> {
+  const { items } = await fetchIngredients({ page: 1, pageSize: 100 });
+  return items;
+}
+
 export async function fetchIngredient(id: string): Promise<Ingredient> {
   const { data } = await api.get(`/v1/ingredients/${id}`);
   return ingredientSchema.parse(data);

@@ -10,6 +10,7 @@ import type {
 import {
   createIngredient,
   deleteIngredient,
+  fetchAllIngredients,
   fetchIngredient,
   fetchIngredients,
   importIngredients,
@@ -19,6 +20,7 @@ import {
 export const ingredientKeys = {
   all: ['ingredients'] as const,
   list: (query: ListIngredientsQuery) => ['ingredients', 'list', query] as const,
+  full: () => ['ingredients', 'full'] as const,
   detail: (id: string) => ['ingredients', 'detail', id] as const,
 };
 
@@ -32,6 +34,14 @@ export function useIngredients(query: ListIngredientsQuery) {
     queryKey: ingredientKeys.list(query),
     queryFn: () => fetchIngredients(query),
     placeholderData: keepPreviousData,
+  });
+}
+
+/** Loads the complete set of ingredients (all pages), for pickers that need every option. */
+export function useAllIngredients() {
+  return useQuery({
+    queryKey: ingredientKeys.full(),
+    queryFn: () => fetchAllIngredients(),
   });
 }
 

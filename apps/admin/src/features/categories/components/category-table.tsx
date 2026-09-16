@@ -67,7 +67,14 @@ export function CategoryTable({
     {
       id: 'description',
       header: 'Description',
-      cell: (category) => <span className="text-muted-foreground">{category.description}</span>,
+      cell: (category) => (
+        <span
+          className="block max-w-[16rem] truncate text-muted-foreground"
+          title={category.description}
+        >
+          {category.description || '—'}
+        </span>
+      ),
     },
     {
       id: 'code',

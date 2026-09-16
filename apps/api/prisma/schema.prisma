@@ -67,6 +67,7 @@ model MeasurementUnit {
   translations          MeasurementUnitTranslation[]
   defaultForIngredients Ingredient[]                 @relation("IngredientDefaultUnit")
   defaultForNutrients   Nutrient[]                   @relation("NutrientDefaultUnit")
+  recipeIngredients     RecipeIngredient[]
 
   @@map("measurement_units")
 }
@@ -129,10 +130,11 @@ model Recipe {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
-  translations  RecipeTranslation[]
-  categoryLinks RecipeCategoryLink[]
-  recipeSteps   RecipeStep[]
-  nutrients     RecipeNutrient[]
+  translations      RecipeTranslation[]
+  categoryLinks     RecipeCategoryLink[]
+  recipeSteps       RecipeStep[]
+  nutrients         RecipeNutrient[]
+  recipeIngredients RecipeIngredient[]
 
   @@map("recipes")
 }
@@ -241,21 +243,11 @@ model Ingredient {
 
   originalSubstitutions   IngredientSubstitution[] @relation("OriginalIngredientSubstitutions")
   substituteSubstitutions IngredientSubstitution[] @relation("SubstituteIngredientSubstitutions")
+  recipeIngredients       RecipeIngredient[]
+  ingredientAllergens     IngredientAllergen[]
 
   @@index([categoryId, isActive])
   @@map("ingredients")
-}
-
-/// Archive of the pre-migration split light/dark ingredient icons, written by the
-/// `ingredient_single_icon` migration so the alternate (and legacy) path stays
-/// recoverable after collapsing to a single `Ingredient.iconPath`.
-model IngredientIconBackup {
-  ingredientId  String   @id @db.Uuid
-  lightIconPath String?
-  darkIconPath  String?
-  archivedAt    DateTime @default(now())
-
-  @@map("ingredient_icon_backup")
 }
 
 model IngredientTranslation {
@@ -314,6 +306,43 @@ model IngredientSubstitutionTranslation {
   @@map("ingredient_substitution_translations")
 }
 
+model RecipeIngredient {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipeId     String   @db.Uuid
+  ingredientId String   @db.Uuid
+  unitId       String?  @db.Uuid
+  quantity     Decimal? @db.Decimal(10, 2)
+  position     Int
+  isOptional   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+
+  unit MeasurementUnit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
+  translations RecipeIngredientTranslation[]
+
+  @@unique([recipeId, position])
+  @@index([ingredientId])
+  @@map("recipe_ingredients")
+}
+
+model RecipeIngredientTranslation {
+  id                 String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipeIngredientId String  @db.Uuid
+  languageCode       String  @db.VarChar(10)
+  preparationNote    String?
+  amountNote         String?
+
+  recipeIngredient RecipeIngredient @relation(fields: [recipeIngredientId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeIngredientId, languageCode])
+  @@map("recipe_ingredient_translations")
+}
+
 model RecipeStep {
   id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   recipeId        String   @db.Uuid
@@ -346,4 +375,41 @@ model RecipeStepTranslation {
 
   @@unique([recipeStepId, languageCode])
   @@map("recipe_step_translations")
+}
+
+model Allergen {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String  @unique @db.VarChar(50)
+  lightIconPath String?
+  darkIconPath  String?
+
+  translations AllergenTranslation[]
+  ingredients  IngredientAllergen[]
+
+  @@map("allergens")
+}
+
+model AllergenTranslation {
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  allergenId   String  @db.Uuid
+  languageCode String  @db.VarChar(10)
+  name         String  @db.VarChar(100)
+  description  String?
+
+  allergen Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+
+  @@unique([allergenId, languageCode])
+  @@map("allergen_translations")
+}
+
+model IngredientAllergen {
+  ingredientId String @db.Uuid
+  allergenId   String @db.Uuid
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  allergen Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+
+  @@id([ingredientId, allergenId])
+  @@map("ingredient_allergens")
 }

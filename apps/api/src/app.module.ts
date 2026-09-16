@@ -8,7 +8,9 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
 import { IngredientsModule } from './modules/ingredients/ingredients.module.js';
 import { IngredientSubstitutionsModule } from './modules/ingredient-substitutions/ingredient-substitutions.module.js';
+import { MeasurementUnitsModule } from './modules/measurement-units/measurement-units.module.js';
 import { MediaModule } from './modules/media/media.module.js';
+import { NutrientsModule } from './modules/nutrients/nutrients.module.js';
 import { RecipesModule } from './modules/recipes/recipes.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -25,6 +27,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     RecipesModule,
     IngredientsModule,
     IngredientSubstitutionsModule,
+    MeasurementUnitsModule,
+    NutrientsModule,
     MediaModule,
     // Distributed tracing, auto-correlated logs, request/job metrics, error
     // telemetry, alarms, and more — out of the box. Sign up at https://observe.nestjs.com

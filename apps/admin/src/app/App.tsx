@@ -19,6 +19,12 @@ import { RecipeEditPage } from '@/features/recipes/components/recipe-edit-page';
 import { IngredientsPage } from '@/features/ingredients/components/ingredients-page';
 import { IngredientCreatePage } from '@/features/ingredients/components/ingredient-create-page';
 import { IngredientEditPage } from '@/features/ingredients/components/ingredient-edit-page';
+import { MeasurementUnitsPage } from '@/features/measurement-units/components/measurement-units-page';
+import { MeasurementUnitCreatePage } from '@/features/measurement-units/components/measurement-unit-create-page';
+import { MeasurementUnitEditPage } from '@/features/measurement-units/components/measurement-unit-edit-page';
+import { NutrientsPage } from '@/features/nutrients/components/nutrients-page';
+import { NutrientCreatePage } from '@/features/nutrients/components/nutrient-create-page';
+import { NutrientEditPage } from '@/features/nutrients/components/nutrient-edit-page';
 import { DashboardPage } from '@/features/dashboard/components/dashboard-page';
 
 export function App() {
@@ -47,7 +53,12 @@ export function App() {
               <Route path="/ingredients" element={<IngredientsPage />} />
               <Route path="/ingredients/new" element={<IngredientCreatePage />} />
               <Route path="/ingredients/:id/edit" element={<IngredientEditPage />} />
-              <Route path="/meal-plans" element={<PlaceholderPage title="Meal Plans" />} />
+              <Route path="/measurement-units" element={<MeasurementUnitsPage />} />
+              <Route path="/measurement-units/new" element={<MeasurementUnitCreatePage />} />
+              <Route path="/measurement-units/:id/edit" element={<MeasurementUnitEditPage />} />
+              <Route path="/nutrients" element={<NutrientsPage />} />
+              <Route path="/nutrients/new" element={<NutrientCreatePage />} />
+              <Route path="/nutrients/:id/edit" element={<NutrientEditPage />} />
               <Route path="/subscriptions" element={<PlaceholderPage title="Subscriptions" />} />
               <Route path="/analytics" element={<PlaceholderPage title="Analytics" />} />
               <Route path="/settings" element={<PlaceholderPage title="Settings" />} />

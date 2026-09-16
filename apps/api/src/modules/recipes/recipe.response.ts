@@ -5,7 +5,8 @@ import { Prisma } from '../../generated/prisma/client.js';
 export const RECIPE_INCLUDE = {
   translations: true,
   categoryLinks: true,
-  reciepeSteps: { include: { translations: true }, orderBy: { position: 'asc' } },
+  recipeSteps: { include: { translations: true }, orderBy: { position: 'asc' } },
+  recipeIngredients: { include: { translations: true }, orderBy: { position: 'asc' } },
 } satisfies Prisma.RecipeInclude;
 
 /** A recipe row with translations, category links and ordered steps (+ their translations). */
@@ -39,7 +40,7 @@ export function toRecipe(row: RecipeWithRelations): Recipe {
       status: translation.status,
     })),
     categoryIds: row.categoryLinks.map((link) => link.categoryId),
-    steps: row.reciepeSteps.map((step) => ({
+    steps: row.recipeSteps.map((step) => ({
       id: step.id,
       position: step.position,
       durationSeconds: step.durationSeconds,
@@ -50,6 +51,20 @@ export function toRecipe(row: RecipeWithRelations): Recipe {
         completionCue: translation.completionCue,
         tip: translation.tip,
         warning: translation.warning,
+      })),
+    })),
+    recipeIngredients: row.recipeIngredients.map((ingredient) => ({
+      id: ingredient.id,
+      ingredientId: ingredient.ingredientId,
+      unitId: ingredient.unitId,
+      // Prisma returns `Decimal` for numeric columns; the contract exposes plain numbers.
+      quantity: ingredient.quantity == null ? null : Number(ingredient.quantity),
+      position: ingredient.position,
+      isOptional: ingredient.isOptional,
+      translations: ingredient.translations.map((translation) => ({
+        languageCode: translation.languageCode,
+        preparationNote: translation.preparationNote,
+        amountNote: translation.amountNote,
       })),
     })),
   };

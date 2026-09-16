@@ -6,6 +6,7 @@ import {
   type ListRecipesQuery,
   type PaginatedRecipes,
   type Recipe,
+  type RecipeIngredientInput,
   type RecipeStepInput,
   type RecipeTranslationInput,
   type UpdateRecipeInput,
@@ -92,7 +93,8 @@ export class RecipesService {
         publishedAt: input.publishedAt ? new Date(input.publishedAt) : null,
         translations: { create: input.translations.map(toTranslationCreate) },
         categoryLinks: { create: input.categoryIds.map((categoryId) => ({ categoryId })) },
-        reciepeSteps: { create: input.steps.map(toStepCreate) },
+        recipeSteps: { create: input.steps.map(toStepCreate) },
+        recipeIngredients: { create: input.recipeIngredients.map(toIngredientCreate) },
       },
       include: RECIPE_INCLUDE,
     });
@@ -101,7 +103,7 @@ export class RecipesService {
   }
 
   async update(id: string, input: UpdateRecipeInput): Promise<Recipe> {
-    const { translations, categoryIds, steps, publishedAt, ...scalars } = input;
+    const { translations, categoryIds, steps, recipeIngredients, publishedAt, ...scalars } = input;
 
     const row = await this.prisma.recipe.update({
       where: { id },
@@ -122,7 +124,15 @@ export class RecipesService {
               },
             }
           : {}),
-        ...(steps ? { reciepeSteps: { deleteMany: {}, create: steps.map(toStepCreate) } } : {}),
+        ...(steps ? { recipeSteps: { deleteMany: {}, create: steps.map(toStepCreate) } } : {}),
+        ...(recipeIngredients
+          ? {
+              recipeIngredients: {
+                deleteMany: {},
+                create: recipeIngredients.map(toIngredientCreate),
+              },
+            }
+          : {}),
       },
       include: RECIPE_INCLUDE,
     });
@@ -159,6 +169,23 @@ function toTranslationCreate(translation: RecipeTranslationInput) {
     servingSuggestions: translation.servingSuggestions,
     searchKeywords: translation.searchKeywords,
     status: translation.status,
+  };
+}
+
+function toIngredientCreate(ingredient: RecipeIngredientInput, index: number) {
+  return {
+    ingredientId: ingredient.ingredientId,
+    unitId: ingredient.unitId ?? null,
+    quantity: ingredient.quantity ?? null,
+    position: index,
+    isOptional: ingredient.isOptional,
+    translations: {
+      create: ingredient.translations.map((translation) => ({
+        languageCode: translation.languageCode,
+        preparationNote: translation.preparationNote ?? null,
+        amountNote: translation.amountNote ?? null,
+      })),
+    },
   };
 }
 

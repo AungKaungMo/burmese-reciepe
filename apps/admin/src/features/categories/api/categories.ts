@@ -24,23 +24,13 @@ export async function fetchCategories(
 export type CategoryFilters = Omit<ListCategoriesQuery, 'page' | 'pageSize'>;
 
 /**
- * Fetches every category matching the filters across all pages (not just the first).
- * Loads page 1 to learn the page count, then pulls the remaining pages in parallel.
- * Use for pickers that must offer the full set (e.g. a category dropdown).
+ * Loads categories for a picker (e.g. a category dropdown), up to the API's max page
+ * size of 100. If the filtered set can exceed 100, switch that picker to a
+ * server-side searchable combobox rather than raising this cap.
  */
 export async function fetchAllCategories(filters: CategoryFilters = {}): Promise<Category[]> {
-  const pageSize = 100;
-  const first = await fetchCategories({ ...filters, page: 1, pageSize });
-
-  if (first.totalPages <= 1) return first.items;
-
-  const rest = await Promise.all(
-    Array.from({ length: first.totalPages - 1 }, (_, index) =>
-      fetchCategories({ ...filters, page: index + 2, pageSize }),
-    ),
-  );
-
-  return [first.items, ...rest.map((page) => page.items)].flat();
+  const { items } = await fetchCategories({ ...filters, page: 1, pageSize: 100 });
+  return items;
 }
 
 export async function fetchCategory(id: string): Promise<Category> {

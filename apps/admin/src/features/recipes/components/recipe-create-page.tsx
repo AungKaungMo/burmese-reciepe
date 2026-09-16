@@ -1,16 +1,15 @@
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { RecipeFormFields } from '@/features/recipes/components/recipe-form-fields';
+import { RecipeFormWizard } from '@/features/recipes/components/recipe-form-wizard';
 import { useRecipeForm } from '@/features/recipes/hooks/use-recipe-form';
 import { Button } from '@/shared/components/ui/button';
 
 export function RecipeCreatePage() {
-  const { form, submit, cover, setCover, isBusy, isUploading, isSaving, errorMessage } =
-    useRecipeForm();
+  const api = useRecipeForm();
 
   return (
-    <form onSubmit={submit} noValidate className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <nav className="flex items-center gap-1.5 text-sm text-muted-foreground" aria-label="Breadcrumb">
         <Link to="/recipes" className="transition-colors hover:text-foreground">
           Recipes
@@ -33,18 +32,7 @@ export function RecipeCreatePage() {
         </Button>
       </section>
 
-      <RecipeFormFields form={form} cover={cover} onCoverChange={setCover} />
-
-      {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
-
-      <div className="flex items-center justify-end gap-3">
-        <Button type="button" variant="outline" disabled={isBusy} asChild>
-          <Link to="/recipes">Cancel</Link>
-        </Button>
-        <Button type="submit" disabled={isBusy}>
-          {isUploading ? 'Uploading…' : isSaving ? 'Creating…' : 'Create Recipe'}
-        </Button>
-      </div>
-    </form>
+      <RecipeFormWizard api={api} submitLabel="Create Recipe" />
+    </div>
   );
 }
