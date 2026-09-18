@@ -5,12 +5,13 @@ import {
   type UploadTarget,
 } from '@repo/contracts';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe.js';
+import { AdminGuard } from '../auth/admin.guard.js';
 import { SupabaseJwtGuard } from '../auth/supabase-jwt.guard.js';
 import { StorageService } from './storage.service.js';
 
 /** Signed uploads to object storage (Cloudflare R2). */
 @Controller('media')
-@UseGuards(SupabaseJwtGuard)
+@UseGuards(SupabaseJwtGuard, AdminGuard)
 export class MediaController {
   constructor(private readonly storage: StorageService) {}
 

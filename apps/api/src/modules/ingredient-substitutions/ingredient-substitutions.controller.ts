@@ -22,12 +22,13 @@ import {
   type UpdateIngredientSubstitutionInput,
 } from '@repo/contracts';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe.js';
+import { AdminGuard } from '../auth/admin.guard.js';
 import { SupabaseJwtGuard } from '../auth/supabase-jwt.guard.js';
 import { IngredientSubstitutionsService } from './ingredient-substitutions.service.js';
 
 /** CRUD for ingredient substitutions and their translations. */
 @Controller('ingredient-substitutions')
-@UseGuards(SupabaseJwtGuard)
+@UseGuards(SupabaseJwtGuard, AdminGuard)
 export class IngredientSubstitutionsController {
   constructor(private readonly substitutions: IngredientSubstitutionsService) {}
 

@@ -31,12 +31,13 @@ import {
   requireXlsxBuffer,
   type UploadedXlsx,
 } from '../../common/xlsx-import.js';
+import { AdminGuard } from '../auth/admin.guard.js';
 import { SupabaseJwtGuard } from '../auth/supabase-jwt.guard.js';
 import { CategoriesService } from './categories.service.js';
 
 /** CRUD for recipe/ingredient categories and their translations. */
 @Controller('categories')
-@UseGuards(SupabaseJwtGuard)
+@UseGuards(SupabaseJwtGuard, AdminGuard)
 export class CategoriesController {
   constructor(private readonly categories: CategoriesService) {}
 

@@ -1,12 +1,13 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import { queryClient } from '@/app/query-client';
 import { initializeAuth } from '@/features/auth/auth-store';
 import { AuthPage } from '@/features/auth/components/auth-page';
 import { PublicOnlyRoute, ProtectedRoute } from '@/features/auth/components/route-guards';
 import { PlaceholderPage } from '@/shared/components/placeholder-page';
+import { NotFoundPage } from '@/shared/components/not-found-page';
 import { ConfirmDialogHost } from '@/shared/components/confirm-dialog';
 import { Toaster } from '@/shared/components/ui/sonner';
 import { AdminLayout } from '@/shared/components/layout/admin-layout';
@@ -33,7 +34,9 @@ export function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      {/* All admin routes live under /admin; `basename` prefixes every route and
+          in-app Link/navigate automatically, so paths stay written as "/recipes". */}
+      <BrowserRouter basename="/admin">
         <Routes>
           {/* Auth-only pages: signed-in users are redirected to the dashboard. */}
           <Route element={<PublicOnlyRoute />}>
@@ -65,7 +68,7 @@ export function App() {
             </Route>
           </Route>
 
-          <Route path="*" element={<Navigate replace to="/" />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
       <Toaster />

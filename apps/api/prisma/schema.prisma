@@ -135,6 +135,7 @@ model Recipe {
   recipeSteps       RecipeStep[]
   nutrients         RecipeNutrient[]
   recipeIngredients RecipeIngredient[]
+  mealTypes         RecipeMealTypeLink[]
 
   @@map("recipes")
 }
@@ -412,4 +413,48 @@ model IngredientAllergen {
 
   @@id([ingredientId, allergenId])
   @@map("ingredient_allergens")
+}
+
+model MealType {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  translations MealTypeTranslation[]
+  recipes      RecipeMealTypeLink[]
+}
+
+model MealTypeTranslation {
+  id           String   @id @default(uuid()) @db.Uuid
+  mealTypeId   String   @db.Uuid
+  languageCode String   // my | en | ja
+
+  name         String
+  description  String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  mealType MealType @relation(fields: [mealTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([mealTypeId, languageCode])
+  @@index([languageCode])
+}
+
+model RecipeMealTypeLink {
+  recipeId   String   @db.Uuid
+  mealTypeId String   @db.Uuid
+
+  createdAt DateTime @default(now())
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  mealType MealType @relation(fields: [mealTypeId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, mealTypeId])
+  @@index([mealTypeId])
 }

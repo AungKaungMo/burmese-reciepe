@@ -22,12 +22,13 @@ import {
   type UpdateMeasurementUnitInput,
 } from '@repo/contracts';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe.js';
+import { AdminGuard } from '../auth/admin.guard.js';
 import { SupabaseJwtGuard } from '../auth/supabase-jwt.guard.js';
 import { MeasurementUnitsService } from './measurement-units.service.js';
 
 /** CRUD for measurement units and their translations. */
 @Controller('measurement-units')
-@UseGuards(SupabaseJwtGuard)
+@UseGuards(SupabaseJwtGuard, AdminGuard)
 export class MeasurementUnitsController {
   constructor(private readonly units: MeasurementUnitsService) {}
 
